@@ -4,7 +4,18 @@ const app = express();
 let job_seekers_register = [];
 let recruiter_register = [];
 
+let loggedin_users = [];
+
 app.use(express.json());
+app.use(express.static("public"));
+
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html");
+});
+
+app.get("/success", (req, res) => {
+  res.sendFile(__dirname + "/public/success.html");
+});
 
 app.post("/api/register", (req, res) => {
   const { name, email, userType, password } = req.body;
@@ -36,7 +47,6 @@ app.post("/api/register", (req, res) => {
     const job_seekers_data = { id, name, email, userType, password };
 
     job_seekers_register.push(job_seekers_data);
-
   } else {
     //checking if the user already exists in the register
     const userIndex = recruiter_register.findIndex(
@@ -62,6 +72,55 @@ app.post("/api/register", (req, res) => {
       userType == "job_seeker" ? "job seekers" : "recruiters"
     } successfully!`,
     data: { id, name, email, userType },
+  });
+});
+
+app.post("/api/login", (req, res) => {
+  //comming from user's desktop
+  const { email, password, userType } = req.body;
+
+  // !undefined = true
+  // !null = true
+
+  if (!email || !password || !userType) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  let index;
+
+  if (userType === "job_seeker") {
+    index = job_seekers_register.findIndex(
+      (user) => user.email == email && user.password == password
+    );
+  } else {
+    //recruiter case
+    index = recruiter_register.findIndex(
+      (user) => user.email == email && user.password == password
+    );
+  }
+
+  // case: user does not exist or email-password unmatched
+  if (index == -1) {
+    return res.status(403).json({
+      message: "Either user does not exist or email-password does not match",
+    });
+  }
+
+  // if user exists in loggedinUser array
+  let loggedInUserIndex = loggedin_users.findIndex(
+    (user) => user.email == email
+  );
+
+  if (loggedInUserIndex !== -1) {
+    return res.status(400).json({ message: "user already loggedin" });
+  }
+
+  // user exists
+  loggedin_users.push({ email, userType });
+
+  res.status(200).json({
+    message: "user loggedin successfully",
+    LoggedInUser: loggedin_users,
   });
 });
 
