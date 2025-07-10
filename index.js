@@ -5,6 +5,7 @@ let job_seekers_register = [];
 let recruiter_register = [];
 
 let loggedin_users = [];
+let job_Posts = [];
 
 app.use(express.json());
 app.use(express.static("public"));
@@ -86,21 +87,21 @@ app.post("/api/login", (req, res) => {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  let index;
+  let user;
 
   if (userType === "job_seeker") {
-    index = job_seekers_register.findIndex(
+    user = job_seekers_register.find(
       (user) => user.email == email && user.password == password
     );
   } else {
     //recruiter case
-    index = recruiter_register.findIndex(
+    user = recruiter_register.find(
       (user) => user.email == email && user.password == password
     );
   }
 
   // case: user does not exist or email-password unmatched
-  if (index == -1) {
+  if (!user) {
     return res.status(403).json({
       message: "Either user does not exist or email-password does not match",
     });
@@ -116,12 +117,61 @@ app.post("/api/login", (req, res) => {
   }
 
   // user exists
-  loggedin_users.push({ email, userType });
+  loggedin_users.push({ email, userType, id: user.id, name: user.name });
 
   res.status(200).json({
     message: "user loggedin successfully",
     LoggedInUser: loggedin_users,
   });
+});
+
+app.post("/api/jobs", (req, res) => {
+  const {
+    email,
+    userType,
+    title,
+    companyName,
+    location,
+    description,
+    postedBy,
+  } = req.body;
+
+  // checking if user is logged in
+
+  if (!email || !userType || !postedBy) {
+    return res
+      .status()
+      .json({ message: "Provide email, user-type and user-id" });
+  }
+
+  const user = loggedin_users.find(
+    (user) =>
+      user.email == email && user.userType == "recruiter" && user.id == postedBy
+  );
+
+  if (!user) {
+    return res.redirect("http://localhost:3000/api/login");
+  }
+
+  // user exists
+
+  if (!title || !companyName || !location || !description || !postedBy) {
+    return res.status(400).json({ message: "Fill all the fields" });
+  }
+
+  const newJob = {
+    id: job_Posts.length + 1,
+    title,
+    companyName,
+    location,
+    description,
+    postedBy,
+  };
+
+  job_Posts.push(newJob);
+
+  res.status(200).json({ message: "Job posted successfully" });
+
 });
 
 app.listen(3000, () => {
