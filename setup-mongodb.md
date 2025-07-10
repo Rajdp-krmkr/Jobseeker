@@ -1,7 +1,3 @@
-Absolutely! Here's a **clear, beginner-friendly guide** on **how to use MongoDB**—from setup to writing basic queries—especially for someone learning it alongside **Express.js**.
-
----
-
 # 📘 Complete Beginner’s Guide to Using MongoDB (For Express.js Developers)
 
 ---
